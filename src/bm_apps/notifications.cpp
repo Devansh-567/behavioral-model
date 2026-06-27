@@ -17,7 +17,7 @@
 #include <mutex>
 #include <iostream>
 
-#include "nn.h"
+#include <nn.h>
 
 namespace bm_apps {
 

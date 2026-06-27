@@ -58,7 +58,17 @@ jobs:
           sudo mv $BAZEL /usr/local/bin/bazel
 
       - name: Build
-        run: bazel build //targets/simple_switch_grpc:simple_switch_grpc
+        run: |
+          bazel build \
+            //targets/simple_switch:simpleswitch \
+            //targets/simple_switch_grpc:simple_switch_grpc \
+            //targets/psa_switch:psaswitch \
+            //targets/pna_nic:pnanic
 
       - name: Test
-        run: bazel test //targets/simple_switch_grpc/tests/...
+        run: |
+          bazel test \
+            //tests/... \
+            //targets/simple_switch_grpc/tests/... \
+            //targets/psa_switch/tests/... \
+            //targets/pna_nic/tests/...

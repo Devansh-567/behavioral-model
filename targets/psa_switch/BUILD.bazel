@@ -1,0 +1,38 @@
+# SPDX-FileCopyrightText: 2026 Yuao Ma
+#
+# SPDX-License-Identifier: Apache-2.0
+
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+
+package(
+    default_visibility = ["//visibility:public"],
+    licenses = ["notice"],
+)
+
+cc_library(
+    name = "psaswitch",
+    srcs = [
+        "externs/psa_counter.cpp",
+        "externs/psa_hash.cpp",
+        "externs/psa_internet_checksum.cpp",
+        "externs/psa_meter.cpp",
+        "externs/psa_random.cpp",
+        "primitives.cpp",
+        "psa_switch.cpp",
+    ],
+    hdrs = [
+        "externs/psa_counter.h",
+        "externs/psa_hash.h",
+        "externs/psa_internet_checksum.h",
+        "externs/psa_meter.h",
+        "externs/psa_random.h",
+        "psa_switch.h",
+    ],
+    includes = ["."],
+    deps = [
+        "//:bm_headers",
+        "//src/BMI:bmi",
+        "//src/bm_sim:bmsim",
+        "@jsoncpp",
+    ],
+)

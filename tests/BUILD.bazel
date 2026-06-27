@@ -1,0 +1,104 @@
+# SPDX-FileCopyrightText: 2026 Yuao Ma
+#
+# SPDX-License-Identifier: Apache-2.0
+
+load("@bazel_skylib//rules:expand_template.bzl", "expand_template")
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+load("@rules_cc//cc:cc_test.bzl", "cc_test")
+
+package(
+    default_visibility = ["//visibility:public"],
+    licenses = ["notice"],
+)
+
+expand_template(
+    name = "utils_cpp",
+    out = "utils.cpp",
+    substitutions = {
+        "@top_builddir@": ".",
+        "@top_srcdir@": ".",
+    },
+    template = "utils.cpp.in",
+)
+
+cc_library(
+    name = "testutils",
+    srcs = [":utils_cpp"],
+    hdrs = ["utils.h"],
+    includes = ["."],
+    deps = [
+        "//src/bm_sim:bmsim",
+        "@nanomsg",
+    ],
+)
+
+cc_library(
+    name = "test_common",
+    srcs = [
+        "main.cpp",
+        "primitives.cpp",
+    ],
+    copts = [
+        "-Isrc/bm_sim",
+    ],
+    defines = ["TESTDATADIR=\\\"" + package_name() + "/testdata\\\""],
+    deps = [
+        ":testutils",
+        "//src/bm_apps:bmapps",
+        "//src/bm_sim:bmsim",
+        "@googletest//:gmock",
+        "@googletest//:gtest",
+        "@jsoncpp",
+    ],
+)
+
+_TESTS = [
+    "test_actions",
+    "test_ageing",
+    "test_assert_assume",
+    "test_bm_apps",
+    "test_calculations",
+    "test_checksums",
+    "test_conditionals",
+    "test_control_flow",
+    "test_core_primitives",
+    "test_counters",
+    "test_data",
+    "test_devmgr",
+    "test_enums",
+    "test_expressions",
+    "test_extern",
+    "test_fields",
+    "test_handle_mgr",
+    "test_header_stacks",
+    "test_header_unions",
+    "test_headers",
+    "test_learning",
+    "test_log_msg",
+    "test_meters",
+    "test_p4objects",
+    "test_packet",
+    "test_parser",
+    "test_pcap",
+    "test_periodic_tasks",
+    "test_phv",
+    "test_pre",
+    "test_queue",
+    "test_queueing",
+    "test_ras",
+    "test_runtime_iface",
+    "test_stateful",
+    "test_tables",
+    "test_target_parser",
+]
+
+[
+    cc_test(
+        name = test,
+        copts = ["-Isrc/bm_sim"],
+        srcs = [test + ".cpp"],
+        data = glob(["testdata/**"]),
+        deps = [":test_common"],
+    )
+    for test in _TESTS
+]
