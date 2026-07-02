@@ -46,7 +46,14 @@ int get_digest_id(const p4::config::v1::P4Info &p4info,
 int get_act_prof_id(const p4::config::v1::P4Info &p4info,
                     const std::string &act_prof_name);
 
-p4::config::v1::P4Info parse_p4info(const char *path);
+// Parses a P4Info text-proto file located at `path`. If `ok` is not
+// null, it is set to indicate whether the file could be opened
+// successfully. This lets callers report a failure however is
+// appropriate for their context (e.g. gtest assertions vs plain
+// program termination), without this shared helper -- used both by
+// gtests and by the non-gtest `example` program -- depending on
+// gtest itself.
+p4::config::v1::P4Info parse_p4info(const char *path, bool *ok = nullptr);
 
 template <typename StreamType, typename MessageType>
 class StreamReceiver {

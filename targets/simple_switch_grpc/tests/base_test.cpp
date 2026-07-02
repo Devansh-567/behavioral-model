@@ -33,7 +33,15 @@ SimpleSwitchGrpcBaseTest::SimpleSwitchGrpcBaseTest(
     : p4runtime_channel(grpc::CreateChannel(
           grpc_server_addr, grpc::InsecureChannelCredentials())),
       p4runtime_stub(p4v1::P4Runtime::NewStub(p4runtime_channel)) {
-  p4info = parse_p4info(p4info_proto_txt_path);
+  bool ok = false;
+  p4info = parse_p4info(p4info_proto_txt_path, &ok);
+  // Use a non-fatal EXPECT_* here rather than ASSERT_*: gtest's fatal
+  // assertions rely on a bare `return`, which does not work as
+  // expected in constructors (see
+  // https://google.github.io/googletest/faq.html#CtorVsSetUp), and
+  // ASSERT_* cannot be used at all in a function with a non-void
+  // return type, like parse_p4info.
+  EXPECT_TRUE(ok) << "Failed to open P4Info file: " << p4info_proto_txt_path;
 }
 
 void
