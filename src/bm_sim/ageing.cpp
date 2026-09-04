@@ -174,14 +174,19 @@ AgeingMonitor::do_sweep() {
         entries.push_back(handle);
       }
     }
-    entries_tmp.clear();
+
+    // prev_sweep_entries must always be updated to reflect the complete set
+    // of entries considered aged during this sweep (entries_tmp), not just
+    // the newly-discovered ones (entries). Using entries here would mean
+    // that a sweep with no newly-aged entries resets prev_sweep_entries to
+    // empty without repopulating it, causing entries that are still aged
+    // but were already reported to be spuriously reported again as "new"
+    // on a subsequent sweep.
     prev_sweep_entries.clear();
+    prev_sweep_entries.insert(entries_tmp.begin(), entries_tmp.end());
+    entries_tmp.clear();
 
     if (entries.empty()) continue;
-
-    for (entry_handle_t handle : entries) {
-      prev_sweep_entries.insert(handle);
-    }
 
     BMLOG_TRACE("Sending ageing notification for table '{}' ({})",
                 t->get_name(), entry.first);

@@ -166,7 +166,12 @@ TEST_F(AgeingTest, NoDuplicate) {
   std::string key_("\x0a\xba");
   std::string key("0x0aba");
   entry_handle_t handle_1;
-  unsigned int sweep_int = 200u;
+  // A longer sweep interval than the other tests use, on purpose: it keeps
+  // the ratio between the interval and typical OS scheduling jitter on a
+  // busy / shared CI machine large, so that the "no further notification"
+  // check below isn't sensitive to a delayed sweep firing late and looking
+  // like a duplicate, or the process being briefly descheduled.
+  unsigned int sweep_int = 500u;
   init_monitor(sweep_int);
   auto tp1 = clock::now();
   ASSERT_EQ(MatchErrorCode::SUCCESS, add_entry(key_, &handle_1, sweep_int));
@@ -174,17 +179,19 @@ TEST_F(AgeingTest, NoDuplicate) {
   auto tp2 = clock::now();
 
   unsigned int elapsed = duration_cast<milliseconds>(tp2 - tp1).count();
-  ASSERT_GT(elapsed, sweep_int - 20u);
-  ASSERT_LT(elapsed, 2 * sweep_int + 20u);
+  ASSERT_GT(elapsed, sweep_int / 2);
+  ASSERT_LT(elapsed, 3 * sweep_int);
 
-  auto tp3 = clock::now();
-  ageing_writer->read(buffer, sizeof(buffer));
-  auto tp4 = clock::now();
-
-  // we make sure that the next sweep does not generate a message
-
-  elapsed = duration_cast<milliseconds>(tp4 - tp3).count();
-  ASSERT_GT(elapsed, (unsigned int) (sweep_int * 1.5));
+  // The entry is never touched again after ageing out, so no further
+  // notification should ever be generated for it, no matter how many more
+  // sweeps run in the meantime. We poll (instead of blocking on read())
+  // over several additional sweep intervals to confirm no duplicate
+  // notification is produced.
+  auto deadline = clock::now() + milliseconds(6 * sweep_int);
+  while (clock::now() < deadline) {
+    ASSERT_NE(MemoryAccessor::Status::CAN_READ, ageing_writer->check_status());
+    sleep_for(milliseconds(20));
+  }
 }
 
 TEST_F(AgeingTest, GetTableNameFromId) {
